@@ -1,6 +1,13 @@
-export function f_Format(value, decimals = 2) {
-  if (value === null || value === undefined || value === '') return ''
-  const num = Number(value)
-  if (Number.isNaN(num)) return String(value)
-  return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+// Formatea fechas: "2024-01-15" → "15/01/2024"
+export function f_Format(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (!isNaN(date)) {
+    return date.toLocaleDateString('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+  return value
 }
