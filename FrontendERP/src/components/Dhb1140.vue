@@ -145,7 +145,7 @@
          const laData = await loRpta.json();
          if (laData.ERROR) {
             alert(laData.ERROR);
-            poRouter.push({name: 'Mnu1001'});
+            poRouter.push({name: 'Login'});
             return;
          }
          paDatos.value = laData;
@@ -172,7 +172,7 @@
          const laData = await loRpta.json();
          if (laData.ERROR) {
             alert(laData.ERROR);
-            poRouter.push({name: 'Mnu1001'});
+               poRouter.push({name: 'Login'});
             return;
          }
          paData.value   = laData;
@@ -226,6 +226,6 @@
    }
 
    function f_Salir() {
-      poRouter.push('/mnu1001');
+      poRouter.push({name: 'Login'});
    }
 </script>
