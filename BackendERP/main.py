@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from CSql import CSql
+from CTesis import CTesis
 
 app = FastAPI()
 
@@ -177,6 +178,116 @@ async def main(request: Request):
         loSql.omCommit()
         loSql.omDisconnect()
         return {"OK": True}
+
+    # ─── TES1010i: Init registro BDT ───────────────────────────────────────
+    elif body["ID"] == "TES1010i":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omInitTesis()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1010b: Buscar egresado ────────────────────────────────────────
+    elif body["ID"] == "TES1010b":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omBuscarEgresadoTesis()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1010g: Grabar plan de tesis ───────────────────────────────────
+    elif body["ID"] == "TES1010g":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omGrabarPlanTesis()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1020i: Init asignar dictaminadores PDT ─────────────────────────
+    elif body["ID"] == "TES1020i":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omInitAsignarDictaminadoresPDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1020c: Cargar dictaminadores PDT ──────────────────────────────
+    elif body["ID"] == "TES1020c":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omCargarDictaminadoresPDT()
+        if llOk:
+            return lo.paDatos
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1020g: Grabar dictaminadores PDT ──────────────────────────────
+    elif body["ID"] == "TES1020g":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omGrabarDictaminadoresPDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1030o: Observar PDT ───────────────────────────────────────────
+    elif body["ID"] == "TES1030o":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omObservarPDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1030a: Aprobar PDT ────────────────────────────────────────────
+    elif body["ID"] == "TES1030a":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omAprobarPDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1040i: Init asignar asesor BDT ────────────────────────────────
+    elif body["ID"] == "TES1040i":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omInitAsignarAsesorBDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1040b: Buscar docente ─────────────────────────────────────────
+    elif body["ID"] == "TES1040b":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omBuscarDocente()
+        if llOk:
+            return lo.paDatos
+        else:
+            return {"ERROR": lo.pcError}
+
+    # ─── TES1040g: Grabar asesor BDT ──────────────────────────────────────
+    elif body["ID"] == "TES1040g":
+        lo = CTesis()
+        lo.paData = body
+        llOk = lo.omGrabarAsesorBDT()
+        if llOk:
+            return lo.paData
+        else:
+            return {"ERROR": lo.pcError}
 
     else:
         return {"ERROR": "ID no reconocido"}

@@ -6,8 +6,8 @@ import time
 import random
 import re
 import datetime
-from CBase import *
-from CSql import *
+from CBase import CDate, fxCorrelativo, fxBitacora
+from CSql import CSql
 
 class CTesis():
 
@@ -460,5 +460,317 @@ class CTesis():
            self.pcError = "NO SE PUDO ACTUALIZAR ESTADO DE TESIS PARA DOCENTES DICTAMINADORES DE PLAN DE TESIS"
            return False
        self.paData = {'OK': 'OK'}    
+       return True
+
+   # -------------------------------------------------------------------------
+   # Observar PDT
+   # 2026-03-22 FPM Creacion
+   # -------------------------------------------------------------------------
+   def omObservarPDT(self):
+       llOk = self.mxValParamObservarPDT()
+       if not llOk:
+          return False
+       llOk = self.loSql.omConnect()
+       if not llOk:
+          self.pcError = self.loSql.pcError
+          return False
+       llOk = self.mxVerificarPDT()
+       if not llOk:
+          self.loSql.omDisconnect()
+          return False
+       llOk = self.mxObservarPDT()
+       if llOk:
+          self.loSql.omCommit()
+       self.loSql.omDisconnect()
+       return llOk
+
+   def mxValParamObservarPDT(self):
+       if not self.mxValParamCodigoUsuario():
+          return False
+       elif not self.mxValParamIdTesis():
+          return False
+       if not 'MOBSERV' in self.paData:
+          self.pcError = 'OBSERVACIÓN NO DEFINIDA'
+          return False
+       return True
+
+   def mxVerificarPDT(self):
+       lcSql = f"SELECT cEstado, mBitaco FROM A03MTES WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"ID TESIS [{self.paData['CIDTESI']}] NO EXISTE"
+          return False
+       elif laTmp[0] != 'B':
+          self.pcError = f"ESTADO DE TESIS NO PERMITE OBSERVACIONES"
+          return False
+       self.laData = {'MBITACO': laTmp[1]}
+       lcSql = f"SELECT cCodDoc FROM A03DDOC WHERE cIdTesi = '{self.paData['CIDTESI']}' AND cTipo = 'P' AND cCodDoc = '{self.paData['CCODUSU']}' AND cEstado = 'A'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"USUARIO NO AUTORIZADO COMO DICTAMINADOR"
+          return False
+       return True
+
+   def mxObservarPDT(self):
+       lmBitaco = fxBitacora(self.laData['MBITACO'], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'O', 'MOBSERV': self.paData['MOBSERV'], 'TMODIFI': None})
+       lcSql = f"UPDATE A03MTES SET mBitaco = '{lmBitaco}' WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+       llOk = self.loSql.omExec(lcSql)
+       if not llOk:
+          self.pcError = "NO SE PUDO GRABAR OBSERVACIÓN"
+          return False
+       self.paData = {'OK': 'OK'}
+       return True
+
+   # -------------------------------------------------------------------------
+   # Aprobar PDT
+   # 2026-03-22 FPM Creacion
+   # -------------------------------------------------------------------------
+   def omAprobarPDT(self):
+       llOk = self.mxValParamAprobarPDT()
+       if not llOk:
+          return False
+       llOk = self.loSql.omConnect()
+       if not llOk:
+          self.pcError = self.loSql.pcError
+          return False
+       llOk = self.mxVerificarPDTAprobar()
+       if not llOk:
+          self.loSql.omDisconnect()
+          return False
+       llOk = self.mxAprobarPDT()
+       if llOk:
+          self.loSql.omCommit()
+       self.loSql.omDisconnect()
+       return llOk
+
+   def mxValParamAprobarPDT(self):
+       if not self.mxValParamCodigoUsuario():
+          return False
+       elif not self.mxValParamIdTesis():
+          return False
+       return True
+
+   def mxVerificarPDTAprobar(self):
+       lcSql = f"SELECT cEstado, mBitaco FROM A03MTES WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"ID TESIS [{self.paData['CIDTESI']}] NO EXISTE"
+          return False
+       elif laTmp[0] != 'B':
+          self.pcError = f"ESTADO DE TESIS NO PERMITE APROBACIÓN"
+          return False
+       self.laData = {'MBITACO': laTmp[1]}
+       lcSql = f"SELECT cCodDoc FROM A03DDOC WHERE cIdTesi = '{self.paData['CIDTESI']}' AND cTipo = 'P' AND cCodDoc = '{self.paData['CCODUSU']}' AND cEstado = 'A'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"USUARIO NO AUTORIZADO COMO DICTAMINADOR"
+          return False
+       return True
+
+   def mxAprobarPDT(self):
+       lmBitaco = fxBitacora(self.laData['MBITACO'], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'A', 'TMODIFI': None})
+       lcSql = f"UPDATE A03DDOC SET cEstado = 'A', mBitaco = '{lmBitaco}' WHERE cIdTesi = '{self.paData['CIDTESI']}' AND cCodDoc = '{self.paData['CCODUSU']}' AND cTipo = 'P'"
+       llOk = self.loSql.omExec(lcSql)
+       if not llOk:
+          self.pcError = "NO SE PUDO GRABAR APROBACIÓN"
+          return False
+       
+       lcSql = f"SELECT COUNT(*) FROM A03DDOC WHERE cIdTesi = '{self.paData['CIDTESI']}' AND cTipo = 'P' AND cEstado = 'A'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if laTmp and laTmp[0] == 2:
+          lmBitaco = fxBitacora(self.laData['MBITACO'], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'C', 'TMODIFI': None})
+          lcSql = f"UPDATE A03MTES SET cEstado = 'C', mBitaco = '{lmBitaco}' WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+          llOk = self.loSql.omExec(lcSql)
+          if not llOk:
+             self.pcError = "NO SE PUDO ACTUALIZAR ESTADO DE TESIS"
+             return False
+       self.paData = {'OK': 'OK'}
+       return True
+
+   # -------------------------------------------------------------------------
+   # Init asignar asesor de BDT
+   # 2026-03-25 FPM Creacion
+   # -------------------------------------------------------------------------
+   def omInitAsignarAsesorBDT(self):
+       llOk = self.mxValParamInitAsignarAsesorBDT()
+       if not llOk:
+          return False
+       llOk = self.loSql.omConnect()
+       if not llOk:
+          self.pcError = self.loSql.pcError
+          return False
+       llOk = self.mxCargarUnidadAcademicaBDT()
+       if not llOk:
+          self.loSql.omDisconnect()
+          return False
+       llOk = self.mxInitAsignarAsesorBDT()
+       self.loSql.omDisconnect()
+       return llOk
+
+   def mxValParamInitAsignarAsesorBDT(self):
+       if not self.mxValParamCodigoUsuario():
+          return False
+       return True
+
+   def mxCargarUnidadAcademicaBDT(self):
+       self.laData = {'CUNIACA': '0049', 'CNOMUNI': None, 'DATOS': None}
+       lcSql = f"SELECT cNomUni FROM A01MUAC WHERE cUniAca = '{self.laData['CUNIACA']}'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"UNIDAD ACADEMICA [{self.laData['CUNIACA']}] NO ESTÁ DEFINIDA"
+          return False
+       self.laData['CNOMUNI'] = laTmp[0]
+       return True
+
+   def mxInitAsignarAsesorBDT(self):
+       laDatos = []
+       lcSql = f"""SELECT A.cIdTesi, TO_CHAR(A.tPresen, 'YYYY-MM-DD HH24:MI'), A.mTitulo, A.cLinea, B.cDescri FROM A03MTES A
+                   INNER JOIN A02MLIN B ON B.cLinea = A.cLinea 
+                   WHERE A.cEstado = 'C' AND B.cUniAca = '{self.laData['CUNIACA']}'
+                   ORDER BY A.tPresen"""
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       while laTmp != None:
+          laData = {'CIDTESI': laTmp[0], 'TPRESEN': laTmp[1], 'MTITULO': laTmp[2], 'CLINEA': laTmp[3], 'CDESLIN': laTmp[4], 'CNOMEST': None, 'NFLAG': 0}
+          llFirst = True
+          i = 0
+          lcSql = f"""SELECT C.cName FROM A03DEST A 
+                      INNER JOIN A01MEST B ON B.cCodEst = A.cCodEst
+                      INNER JOIN S01MPER C ON C.cNroDni = B.cNroDni
+                      WHERE A.cIdTesi = '{laTmp[0]}' ORDER BY C.cName"""
+          R1 = self.loSql.omExecRS(lcSql)
+          laTmp1 = self.loSql.fetch(R1)
+          while laTmp1 != None:
+             i += 1
+             if llFirst:
+                llFirst = False
+                laData['CNOMEST'] = laTmp1[0]
+             laTmp1 = self.loSql.fetch(R1)
+          if i == 0:
+             self.pcError = f"ID DE TESIS [{laTmp[0]}] NO TIENE EGRESADOS ASIGNADOS"
+             return False
+          laData['NFLAG'] = i
+          laDatos.append(laData)
+          laTmp = self.loSql.fetch(RS)
+       if len(laDatos) == 0:
+          self.pcError = f"NO HAY PLANES DE TESIS APROBADOS PENDIENTES"
+          return False
+       self.laData['DATOS'] = laDatos
+       self.paData = self.laData
+       return True
+
+   # -------------------------------------------------------------------------
+   # Buscar docente para asesor
+   # 2026-03-25 FPM Creacion
+   # -------------------------------------------------------------------------
+   def omBuscarDocente(self):
+       llOk = self.mxValParamBuscarDocente()
+       if not llOk:
+          return False
+       llOk = self.loSql.omConnect()
+       if not llOk:
+          self.pcError = self.loSql.pcError
+          return False
+       llOk = self.mxBuscarDocente()
+       self.loSql.omDisconnect()
+       return llOk
+
+   def mxValParamBuscarDocente(self):
+       if not 'CPARAM' in self.paData or len(self.paData['CPARAM'].strip()) < 3:
+          self.pcError = 'PARÁMETRO DE BÚSQUEDA NO DEFINIDO O INVÁLIDO'
+          return False
+       return True
+
+   def mxBuscarDocente(self):
+       laDatos = []
+       lcNombre = self.paData['CPARAM'].strip().replace(' ', '%') + '%'
+       lcSql = f"""SELECT A.cCodUsu, B.cName FROM S01MUSU A
+                   INNER JOIN S01MPER B ON B.cNroDni = A.cNroDni
+                   WHERE B.cName LIKE '{lcNombre}' AND A.cEstado = 'A' ORDER BY B.cName"""
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       while laTmp != None:
+          laDatos.append({'CCODDOC': laTmp[0], 'CNOMBRE': laTmp[1]})
+          laTmp = self.loSql.fetch(RS)
+       if len(laDatos) == 0:
+          self.pcError = f"NO HAY DOCENTES QUE CUMPLAN CRITERIO DE BÚSQUEDA"
+          return False
+       self.paDatos = laDatos
+       return True
+
+   # -------------------------------------------------------------------------
+   # Grabar asesor de BDT
+   # 2026-03-22 FPM Creacion
+   # -------------------------------------------------------------------------
+   def omGrabarAsesorBDT(self):
+       llOk = self.mxValParamGrabarAsesorBDT()
+       if not llOk:
+          return False
+       llOk = self.loSql.omConnect()
+       if not llOk:
+          self.pcError = self.loSql.pcError
+          return False
+       llOk = self.mxVerAsesorBDT()
+       if not llOk:
+          self.loSql.omDisconnect()
+          return False
+       llOk = self.mxGrabarAsesorBDT()
+       if llOk:
+          self.loSql.omCommit()
+       self.loSql.omDisconnect()
+       return llOk
+
+   def mxValParamGrabarAsesorBDT(self):
+       if not self.mxValParamCodigoUsuario():
+          return False
+       elif not self.mxValParamIdTesis():
+          return False
+       elif not 'CCODDOC' in self.paData or not re.match('^[0-9A-Z\-]{4}$', self.paData['CCODDOC']):
+          self.pcError = 'CÓDIGO DE DOCENTE NO DEFINIDO O INVÁLIDO'
+          return False
+       return True
+
+   def mxVerAsesorBDT(self):
+       lcSql = f"SELECT cCodUsu FROM S01MUSU WHERE cCodUsu = '{self.paData['CCODDOC']}' AND cEstado = 'A'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"DOCENTE NO EXISTE O NO ESTÁ VIGENTE"
+          return False
+       lcSql = f"SELECT cEstado FROM A03MTES WHERE cIdTesi = '{self.paData['CIDTESI']}' AND cEstado = 'C'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if not laTmp or len(laTmp) == 0:
+          self.pcError = f"TESIS NO ESTÁ EN ESTADO APROBADO PARA ASIGNAR ASESOR"
+          return False
+       self.laData = {'MBITACO': None}
+       return True
+
+   def mxGrabarAsesorBDT(self):
+       lmBitaco = fxBitacora([], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'A', 'TMODIFI': None})
+       lcSql = f"INSERT INTO A03DDOC (cIdTesi, cTipo, cCodDoc, cEstado, mBitaco) VALUES ('{self.paData['CIDTESI']}', 'A', '{self.paData['CCODDOC']}', 'A', '{lmBitaco}')"
+       llOk = self.loSql.omExec(lcSql)
+       if not llOk:
+          self.pcError = "NO SE PUDO INSERTAR ASESOR DE BORRADOR DE TESIS"
+          return False
+       lcSql = f"SELECT mBitaco FROM A03MTES WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+       RS = self.loSql.omExecRS(lcSql)
+       laTmp = self.loSql.fetch(RS)
+       if laTmp:
+          lmBitaco = fxBitacora(laTmp[0], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'D', 'TMODIFI': None})
+       else:
+          lmBitaco = fxBitacora([], {'CCODUSU': self.paData['CCODUSU'], 'CESTADO': 'D', 'TMODIFI': None})
+       lcSql = f"UPDATE A03MTES SET cEstado = 'D', mBitaco = '{lmBitaco}' WHERE cIdTesi = '{self.paData['CIDTESI']}'"
+       llOk = self.loSql.omExec(lcSql)
+       if not llOk:
+           self.pcError = "NO SE PUDO ACTUALIZAR ESTADO DE ASESORÍA DE TESIS"
+           return False
+       self.paData = {'OK': 'OK'}
        return True
       

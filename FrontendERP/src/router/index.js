@@ -16,6 +16,11 @@ const routes = [
     component: Dhb1140
   },
   {
+    path: '/dhb1140',
+    name: 'Dhb1140',
+    component: Dhb1140
+  },
+  {
     path: '/tes1100',
     name: 'Tes1100',
     component: Tes1100
@@ -24,6 +29,11 @@ const routes = [
     path: '/tes1110',
     name: 'Tes1110',
     component: Tes1110
+  },
+  {
+    path: '/tes1120',
+    name: 'Tes1120',
+    component: Tes1110  // Temporal: usa el mismo componente de PDT
   }
 ]
 
